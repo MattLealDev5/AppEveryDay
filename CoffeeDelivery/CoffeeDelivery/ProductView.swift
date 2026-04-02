@@ -26,14 +26,9 @@ private extension Color {
 
 struct ProductView: View {
     @Environment(\.dismiss) private var dismiss
+    @Environment(CartViewModel.self) private var cart
 
     let coffee: Coffee
-
-    private enum CoffeeSize: String, CaseIterable {
-        case small  = "114ml"
-        case medium = "140ml"
-        case large  = "227ml"
-    }
 
     @State private var selectedSize: CoffeeSize = .large
     @State private var quantity: Int = 1
@@ -46,7 +41,7 @@ struct ProductView: View {
                 VStack {
                     Spacer(minLength: 0)
                     ZStack(alignment: .bottom) {
-                        Image(coffee.imageName)
+                        Image("coffee_generic")
                             .resizable()
                             .scaledToFit()
                             .frame(maxWidth: .infinity)
@@ -80,6 +75,9 @@ struct ProductView: View {
                 .frame(height: 222)
                 .background(Color.footerBg)
         }
+        .sheet(isPresented: Bindable(cart).showCart) {
+            CartView()
+        }
     }
 
     // MARK: Navbar
@@ -95,24 +93,29 @@ struct ProductView: View {
 
             Spacer()
 
-            ZStack(alignment: .topTrailing) {
-                Image(systemName: "cart")
-                    .font(.system(size: 20))
-                    .foregroundColor(.brand)
-                    .padding(8)
-                    .background(Color.brand.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            Button { cart.showCart = true } label: {
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "cart")
+                        .font(.system(size: 20))
+                        .foregroundColor(.brand)
+                        .padding(8)
+                        .background(Color.brand.opacity(0.15))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
 
-                Circle()
-                    .fill(Color.brand)
-                    .frame(width: 20, height: 20)
-                    .overlay(
-                        Text("3")
-                            .font(.system(size: 12))
-                            .foregroundColor(.white)
-                    )
-                    .offset(x: 8, y: -8)
+                    if cart.totalCount > 0 {
+                        Circle()
+                            .fill(Color.brand)
+                            .frame(width: 20, height: 20)
+                            .overlay(
+                                Text("\(cart.totalCount)")
+                                    .font(.system(size: 12))
+                                    .foregroundColor(.white)
+                            )
+                            .offset(x: 8, y: -8)
+                    }
+                }
             }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 32)
         .padding(.vertical, 20)
@@ -220,7 +223,10 @@ struct ProductView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
                 // Add button
-                Button(action: {}) {
+                Button {
+                    cart.add(coffee: coffee, size: selectedSize, quantity: quantity)
+                    quantity = 1
+                } label: {
                     Text("ADICIONAR")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white)
@@ -242,4 +248,5 @@ struct ProductView: View {
 
 #Preview {
     ProductView(coffee: Coffee.allCoffees.first { $0.name == "Irlandês" }!)
+        .environment(CartViewModel())
 }

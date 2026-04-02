@@ -11,11 +11,13 @@ import SwiftUI
 struct CoffeeDeliveryApp: App {
     @State private var showSplash = true
     @State private var splashFinished = false
+    @State private var cart = CartViewModel()
+    @State private var navigationPath = NavigationPath()
 
     var body: some Scene {
         WindowGroup {
             ZStack {
-                NavigationStack {
+                NavigationStack(path: $navigationPath) {
                     CatalogueView(splashFinished: splashFinished)
                         .navigationBarHidden(true)
                         .navigationDestination(for: Coffee.self) { coffee in
@@ -29,6 +31,13 @@ struct CoffeeDeliveryApp: App {
                         showSplash = false
                         splashFinished = true
                     }
+                }
+            }
+            .environment(cart)
+            .fullScreenCover(isPresented: Bindable(cart).showOrderConfirmed) {
+                OrderConfirmedView {
+                    cart.showOrderConfirmed = false
+                    navigationPath = NavigationPath()
                 }
             }
         }

@@ -173,6 +173,8 @@ private struct CoffeeListCard: View {
 // MARK: - CatalogueView
 
 struct CatalogueView: View {
+    @Environment(CartViewModel.self) private var cart
+
     var splashFinished: Bool = true
 
     @State private var searchText = ""
@@ -237,10 +239,10 @@ struct CatalogueView: View {
             .scrollClipDisabled()
             .background(Color.appBg)
         }
-        // Clip at the screen boundary so the header is hidden above the screen
-        // during the blank phase and reveals as it slides down
         .clipped()
-        .ignoresSafeArea(edges: .top)
+        .sheet(isPresented: Bindable(cart).showCart) {
+            CartView()
+        }
         .onChange(of: splashFinished) { _, finished in
             guard finished else { return }
             // Phase 1 → 2: dark header slides down from above
@@ -272,14 +274,29 @@ struct CatalogueView: View {
                         .foregroundColor(.appBg)
                 }
                 Spacer()
-                Button(action: {}) {
-                    Image(systemName: "cart")
-                        .font(.system(size: 18))
-                        .foregroundColor(.brandYellow)
-                        .padding(8)
-                        .background(Color.brandYellow.opacity(0.15))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                Button { cart.showCart = true } label: {
+                    ZStack(alignment: .topTrailing) {
+                        Image(systemName: "cart")
+                            .font(.system(size: 18))
+                            .foregroundColor(.brandYellow)
+                            .padding(8)
+                            .background(Color.brandYellow.opacity(0.15))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+
+                        if cart.totalCount > 0 {
+                            Circle()
+                                .fill(Color.brandYellow)
+                                .frame(width: 20, height: 20)
+                                .overlay(
+                                    Text("\(cart.totalCount)")
+                                        .font(.system(size: 12, weight: .bold))
+                                        .foregroundColor(.white)
+                                )
+                                .offset(x: 8, y: -8)
+                        }
+                    }
                 }
+                .buttonStyle(.plain)
             }
             .padding(.horizontal, 32)
             .padding(.vertical, 20)
@@ -403,4 +420,5 @@ struct CatalogueView: View {
         CatalogueView()
             .navigationBarHidden(true)
     }
+    .environment(CartViewModel())
 }
